@@ -12,7 +12,7 @@ library(readr)
 library(mgcv)
 library(modelr)
 ```
-
+Question2
 ```{r}
 homicides_data = 
   read_csv("homicide-data.csv") %>%
@@ -43,4 +43,24 @@ fit_logistic %>%
          lower = exp(estimate - 1.96 * std.error),
          upper = exp(estimate + 1.96 * std.error)) %>%
   knitr::kable(digits = 3)
+```
+
+
+```{r}
+glm_cities = 
+  homicides_data %>%
+  nest(data = -city_state) %>%
+  mutate(
+    models = map(data, ~glm(as.factor(resolved) ~ victim_age + victim_race + victim_sex, data = .x, family = binomial())),
+  results = map(models, broom::tidy)) %>% 
+  select(-data, -models) %>% 
+  unnest(results)
+
+glm_cities = 
+  glm_cities %>% 
+  mutate(OR = exp(estimate),
+         lower = exp(estimate - 1.96 * std.error),
+         upper = exp(estimate + 1.96 * std.error))
+glm_cities
+```
 
