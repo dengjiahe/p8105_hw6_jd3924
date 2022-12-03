@@ -79,7 +79,17 @@ Question3
 ```{r}
 birthweight = 
   read_csv("birthweight.csv") %>%
-  janitor::clean_names()
+  janitor::clean_names() %>%
+  mutate(
+    babysex = as.factor(babysex),
+    frace = as.factor(frace),
+    malform = as.factor(malform),
+    mrace = as.factor(mrace))
+birthweight
 ```
+```{r}
+map(birthweight, ~ sum(is.na(.)))
+```
+There is no NA that contained in the dataset. 
 
 
