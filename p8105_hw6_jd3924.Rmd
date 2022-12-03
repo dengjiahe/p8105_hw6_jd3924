@@ -15,13 +15,16 @@ library(modelr)
 Question2
 ```{r}
 homicides_data = 
-  read_csv("homicide-data.csv") %>%
+  read_csv("homicide-data.csv", na =" ") %>%
+  drop_na() %>%
   mutate(
     city_state = str_c(city,state, sep = ","),
     victim_age = as.numeric(victim_age),
     resolved = ifelse(disposition %in% c("Closed without arrest","Open/No arrest"), "unsolved","solved")) %>%
   filter(victim_race %in% c("White", "Black"),
-         city_state != "Tulsa,AL")
+         !city_state %in% c("Tulsa,AL","Dallas,TX","Phoenix,AZ","Kansas City,MO"),
+         victim_age != "Unknown")
+
 
 homicides_data
 ```
@@ -72,14 +75,22 @@ male_vs_female =
   ggplot(aes(x = city_state, y = OR)) +
   geom_point() + 
   geom_errorbar(aes(ymin = lower, ymax = upper)) + 
-  theme(axis.text.x = element_text(angle = 80, hjust = 1))
+  theme(axis.text.x = element_text(angle = 80, hjust = 1)) +
+  labs(
+    x = "city,state",
+    y = "estimated OR",
+    title = "estimated OR and CIs for solving homicides comparing victims on gender"
+  )
 male_vs_female
 ```
+Holding all other variables constant, homicides with male victims are relatively less likely to be resolved than homicides with female victims in all cities.
+
 Question3
 ```{r}
 birthweight = 
   read_csv("birthweight.csv") %>%
   janitor::clean_names() %>%
+  drop_na() %>%
   mutate(
     babysex = as.factor(babysex),
     frace = as.factor(frace),
@@ -90,7 +101,7 @@ birthweight
 ```{r}
 map(birthweight, ~ sum(is.na(.)))
 ```
-There is no NA that contained in the dataset. 
+There is no NA in the dataset. 
 ```{r}
 model_fit = lm(bwt ~ ., data = birthweight)
 summary(model_fit)
@@ -126,6 +137,39 @@ glm(bwt ~ blength + gaweeks, data = birthweight)
 ```{r}
 glm(bwt ~ bhead * blength * babysex, data = birthweight)
 ```
+```{r}
+cv_df = 
+  crossv_mc(birthweight, 100) %>% 
+   mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble))
+cv_df
 
+```
+```{r}
+cv_df = 
+  cv_df %>% 
+  mutate(
+    mod1 = map(train, ~glm(bwt ~ babysex + bhead + blength + gaweeks + mrace + parity + smoken, data = .x)),
+    mod2 = map(train, ~glm(bwt ~ blength + gaweeks, data = .x)),
+    mod3 = map(train, ~glm(bwt ~ bhead * blength * babysex, data =.x))) %>%
+  mutate(
+    rmse_mod1 = map2_dbl(.x=mod1, .y=test, ~rmse(model = .x, data = .y)),
+    rmse_mod2 = map2_dbl(.x=mod2, .y=test, ~rmse(model = .x, data = .y)),
+    rmse_mod3 = map2_dbl(.x=mod3, .y=test, ~rmse(model = .x, data = .y)))
+cv_df
+```
+```{r}
+cv_df %>% 
+  select(starts_with("rmse")) %>% 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_") %>% 
+  mutate(model = fct_inorder(model)) %>% 
+  ggplot(aes(x = model, y = rmse)) + geom_violin()
+```
+Among these model, mod 1 is the best among these three model because it has lowest rmse.
 
 
