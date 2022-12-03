@@ -7,7 +7,24 @@ output: github_document
 
 ```{r}
 library(tidyverse)
-urlfile = "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
-homicides_data = read_csv(url(urlfile), na = c(" ", "Unknown"))
+library(dplyr)
+library(readr)
+library(mgcv)
+library(modelr)
 ```
+
+```{r}
+homicides_data = 
+  read_csv("homicide-data.csv") %>%
+  mutate(
+    city_state = str_c(city,state, sep = ","),
+    victim_age = as.numeric(victim_age),
+    resolved = ifelse(disposition %in% c("Closed without arrest","Open/No arrest"), "unsolved","solved")) %>%
+  filter(victim_race %in% c("White", "Black"),
+         city_state != "Tulsa,AL")
+
+homicides_data
+```
+
+
 
