@@ -120,6 +120,12 @@ use add_predictions and add_residuals to plot the model residuals against fitted
 glm(bwt ~ babysex + bhead + blength + gaweeks + mrace + parity + smoken, data = birthweight) %>%
   broom::tidy() %>% knitr::kable(digits = 3)
 ```
+```{r}
+glm(bwt ~ blength + gaweeks, data = birthweight)
+```
+```{r}
+glm(bwt ~ bhead * blength * babysex, data = birthweight)
+```
 
 
 
