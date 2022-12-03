@@ -25,6 +25,22 @@ homicides_data =
 
 homicides_data
 ```
+```{r}
+baltimore_df = 
+  homicides_data %>%
+  filter(city_state == "Baltimore,MD")
+baltimore_df
+```
+```{r}
+fit_logistic = 
+  baltimore_df %>% 
+  mutate(resolved = as.factor(resolved)) %>%
+  glm(resolved ~ victim_age + victim_race + victim_sex, data = ., family = binomial())
 
-
+fit_logistic %>% 
+  broom::tidy() %>% 
+  mutate(OR = exp(estimate),
+         lower = exp(estimate - 1.96 * std.error),
+         upper = exp(estimate + 1.96 * std.error)) %>%
+  knitr::kable(digits = 3)
 
