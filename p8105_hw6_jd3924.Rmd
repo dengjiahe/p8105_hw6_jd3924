@@ -91,5 +91,29 @@ birthweight
 map(birthweight, ~ sum(is.na(.)))
 ```
 There is no NA that contained in the dataset. 
+```{r}
+model_fit = lm(bwt ~ ., data = birthweight)
+summary(model_fit)
+```
+Apply lm to all variable in the data, and check their p_value, and choose only those are significant. 
+Significant variable are babysex2, bhead, blength, gaweeks, mrace2, parity, and smoken.
+Then, we need to test the assumption of linear regresson.
+```{r}
+qqnorm(residuals(model_fit), ylab = "residuals")
+qqline(residuals(model_fit))
+```
+From the plot above we can see that the residual follow a normal distribution, which is met the assumpition. 
+```{r}
+birthweight %>%
+  add_residuals(model_fit) %>%
+  add_predictions(model_fit) %>%
+  ggplot(aes(x = pred, y = resid)) + geom_point(alpha=0.5) +
+  geom_smooth(color = "red", method = "lm") +
+  labs(
+    x = "fitted value",
+    y = "residuals"
+  )
+```
+use add_predictions and add_residuals to plot the model residuals against fitted values. From the plot above, we can see that the variances is not a constance, which does not meet the assumption. Thus, we should use glm() instead of lm()
 
 
