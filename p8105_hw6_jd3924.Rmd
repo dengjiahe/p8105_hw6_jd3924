@@ -64,3 +64,15 @@ glm_cities =
 glm_cities
 ```
 
+```{r}
+male_vs_female = 
+  glm_cities %>%
+  filter(term == "victim_sexMale") %>%
+  mutate(city_state = fct_reorder(city_state, OR)) %>%
+  ggplot(aes(x = city_state, y = OR)) +
+  geom_point() + 
+  geom_errorbar(aes(ymin = lower, ymax = upper)) + 
+  theme(axis.text.x = element_text(angle = 80, hjust = 1))
+male_vs_female
+```
+
