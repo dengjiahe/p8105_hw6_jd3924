@@ -116,4 +116,10 @@ birthweight %>%
 ```
 use add_predictions and add_residuals to plot the model residuals against fitted values. From the plot above, we can see that the variances is not a constance, which does not meet the assumption. Thus, we should use glm() instead of lm()
 
+```{r}
+glm(bwt ~ babysex + bhead + blength + gaweeks + mrace + parity + smoken, data = birthweight) %>%
+  broom::tidy() %>% knitr::kable(digits = 3)
+```
+
+
 
