@@ -37,14 +37,15 @@ baltimore_df
 ```{r}
 fit_logistic = 
   baltimore_df %>% 
-  mutate(resolved = as.factor(resolved)) %>%
-  glm(resolved ~ victim_age + victim_race + victim_sex, data = ., family = binomial())
+  mutate(resolved = ifelse(resolved == "solved", 1, 0)) %>%
+  glm(resolved ~ victim_age + victim_sex + victim_race, data = ., family = binomial())
 
 fit_logistic %>% 
   broom::tidy() %>% 
   mutate(OR = exp(estimate),
          lower = exp(estimate - 1.96 * std.error),
          upper = exp(estimate + 1.96 * std.error)) %>%
+  select(term, estimate, OR, lower, upper, p.value) %>%
   knitr::kable(digits = 3)
 ```
 
@@ -52,9 +53,12 @@ fit_logistic %>%
 ```{r}
 glm_cities = 
   homicides_data %>%
+  mutate(
+      resolved = ifelse(resolved == "solved", 1, 0)
+  ) %>%
   nest(data = -city_state) %>%
   mutate(
-    models = map(data, ~glm(as.factor(resolved) ~ victim_age + victim_race + victim_sex, data = .x, family = binomial())),
+    models = map(data, ~glm(resolved ~ victim_age + victim_race + victim_sex, data = .x, family = binomial())),
   results = map(models, broom::tidy)) %>% 
   select(-data, -models) %>% 
   unnest(results)
@@ -63,7 +67,8 @@ glm_cities =
   glm_cities %>% 
   mutate(OR = exp(estimate),
          lower = exp(estimate - 1.96 * std.error),
-         upper = exp(estimate + 1.96 * std.error))
+         upper = exp(estimate + 1.96 * std.error)) %>%
+  select(city_state, term, estimate, OR, lower, upper, p.value)
 glm_cities
 ```
 
@@ -75,7 +80,7 @@ male_vs_female =
   ggplot(aes(x = city_state, y = OR)) +
   geom_point() + 
   geom_errorbar(aes(ymin = lower, ymax = upper)) + 
-  theme(axis.text.x = element_text(angle = 80, hjust = 1)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   labs(
     x = "city,state",
     y = "estimated OR",
@@ -83,7 +88,7 @@ male_vs_female =
   )
 male_vs_female
 ```
-Holding all other variables constant, homicides with male victims are relatively less likely to be resolved than homicides with female victims in all cities.
+when all other variables fixed, homicides with male victims are relatively less likely to be resolved than homicides with female victims in all cities.And city Albuquerque,NM has the highest odd ratio. And New York has the lowest odd ratio, also it confidence interval does not contain 1.
 
 Question3
 ```{r}
